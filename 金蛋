@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>砸金蛋 · 六个金蛋</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #2e1e0f 0%, #4a3520 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      padding: 1rem;
+    }
+
+    .container {
+      max-width: 950px;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      border-radius: 80px 80px 48px 48px;
+      padding: 2rem 1.5rem 2rem 1.5rem;
+      box-shadow: 0 25px 40px rgba(0, 0, 0, 0.6), inset 0 1px 4px rgba(255, 215, 0, 0.3);
+      border: 2px solid #c9a458;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: #ffd966;
+      text-shadow: 0 4px 0 #7a4d1a, 0 8px 15px black, 0 0 12px #ffb347;
+      margin-bottom: 0.75rem;
+      word-break: break-word;
+      transform: rotate(-1deg);
+    }
+
+    .subhead {
+      text-align: center;
+      color: #e6cfa0;
+      font-style: italic;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      text-shadow: 0 2px 4px #00000060;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+    }
+
+    .egg-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      justify-items: center;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+
+    /* 蛋卡片 */
+    .egg-card {
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 3 / 4;
+      perspective: 800px;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s;
+      filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.5));
+    }
+
+    .egg-card:hover:not(.smashed) {
+      transform: scale(1.02) translateY(-5px);
+      filter: drop-shadow(0 18px 15px rgba(0, 0, 0, 0.6));
+    }
+
+    /* 蛋内层翻转容器 */
+    .flip-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      transform-style: preserve-3d;
+    }
+
+    .egg-card.smashed .flip-container {
+      transform: rotateY(180deg);
+    }
+
+    /* 蛋正面 & 蛋背面 (共用) */
+    .egg-front, .egg-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: inset 0 -10px 15px rgba(0, 0, 0, 0.3), inset 0 12px 18px rgba(255, 240, 150, 0.7), 0 10px 15px rgba(0, 0, 0, 0.4);
+      border: 3px solid #f5e7b2;
+    }
+
+    /* 金蛋正面 —— 金光闪闪 */
+    .egg-front {
+      background: radial-gradient(circle at 35% 30%, #ffecb0, #e6b422 60%, #b37b1e);
+      background-size: 200% 200%;
+      background-position: 0% 0%;
+      transform: rotate(0deg);
+      color: #4a2e0e;
+    }
+
+    /* 蛋壳高光 */
+    .egg-front::after {
+      content: "";
+      position: absolute;
+      top: 8%;
+      left: 15%;
+      width: 28%;
+      height: 18%;
+      background: radial-gradient(circle, rgba(255, 255, 240, 0.9) 0%, rgba(255, 255, 200, 0.2) 90%);
+      border-radius: 50%;
+      filter: blur(3px);
+      opacity: 0.8;
+    }
+
+    /* 蛋背 —— 中指表情 (背面一开始隐藏) */
+    .egg-back {
+      background: radial-gradient(circle at 60% 30%, #d9d9d9, #8a8a8a 90%);
+      transform: rotateY(180deg);
+      color: #1e1e1e;
+      font-size: 4.5rem;
+      line-height: 1.2;
+      box-shadow: inset 0 -5px 10px #3a3a3a, inset 0 10px 15px #f0f0f0, 0 10px 15px black;
+      border-color: #bbbbbb;
+      text-shadow: 2px 2px 0 #ffffff80, 3px 3px 0 #00000040;
+      padding-bottom: 10px;
+    }
+
+    /* 蛋上的裂纹装饰（正面） */
+    .crack-icon {
+      font-size: 2rem;
+      opacity: 0.7;
+      margin-top: 1rem;
+      color: #a0522d;
+      filter: drop-shadow(0 2px 3px #00000050);
+    }
+
+    /* 锤子图标 */
+    .hammer-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.25rem;
+      filter: drop-shadow(0 4px 4px #00000060);
+    }
+
+    .egg-front .egg-label {
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: #3d2b1a90;
+      color: #ffd966;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      letter-spacing: 1px;
+      backdrop-filter: blur(2px);
+      border: 1px solid #ffd96650;
+      margin-top: 0.25rem;
+    }
+
+    /* 背面手势容器 */
+    .finger-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .finger-emoji {
+      font-size: 5rem;
+      line-height: 1;
+      transform: rotate(10deg) scale(1.2);
+      filter: drop-shadow(0 4px 6px #00000060);
+    }
+
+    .smashed-message {
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: #1f1f1f;
+      color: #f0c27b;
+      padding: 0.25rem 0.8rem;
+      border-radius: 30px;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: 1px solid #f0c27b;
+    }
+
+    /* 重置按钮 */
+    .reset-button {
+      display: block;
+      margin: 0 auto;
+      background: #c9a458;
+      border: none;
+      border-radius: 60px;
+      padding: 0.9rem 3rem;
+      font-weight: 800;
+      font-size: 1.3rem;
+      color: #2d1c0c;
+      letter-spacing: 3px;
+      cursor: pointer;
+      box-shadow: 0 10px 0 #7a4d1a, 0 12px 20px black;
+      transition: all 0.08s linear;
+      text-transform: uppercase;
+      border: 1px solid #f5e7b2;
+      text-shadow: 0 1px 0 #ffe9b0;
+    }
+
+    .reset-button:active {
+      transform: translateY(6px);
+      box-shadow: 0 4px 0 #7a4d1a, 0 12px 20px black;
+    }
+
+    .reset-button:hover {
+      background: #e0b45c;
+    }
+
+    /* 响应式 */
+    @media (max-width: 650px) {
+      .container {
+        padding: 1.5rem 1rem;
+        border-radius: 50px 50px 30px 30px;
+      }
+      h1 {
+        font-size: 2rem;
+        letter-spacing: 3px;
+      }
+      .egg-grid {
+        gap: 0.9rem;
+      }
+      .egg-card {
+        max-width: 150px;
+      }
+      .finger-emoji {
+        font-size: 3.5rem;
+      }
+      .egg-front .hammer-icon {
+        font-size: 1.6rem;
+      }
+      .reset-button {
+        padding: 0.7rem 1.8rem;
+        font-size: 1rem;
+      }
+      .smashed-message {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .egg-grid {
+        gap: 0.6rem;
+      }
+      .finger-emoji {
+        font-size: 2.8rem;
+      }
+      .egg-front .egg-label {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔨 砸金蛋 🔨</h1>
+    <div class="subhead">6个金蛋 · 砸开有惊喜</div>
+
+    <!-- 金蛋网格 -->
+    <div class="egg-grid" id="eggGrid">
+      <!-- 每个金蛋都由JS动态渲染，便于重置，但也可以静态写好。为了更简洁，这里直接用JS生成，重置也方便。 -->
+    </div>
+
+    <button class="reset-button" id="resetBtn">重来一局</button>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- 配置 ----------
+      const EGG_COUNT = 6;                // 六个金蛋
+      const FINGER_EMOJI = '🖕';          // 竖中指 (Unicode 1F595)
+      // 也可以使用 "🖕" 这个emoji，在大多数系统显示为竖中指。
+
+      const eggGrid = document.getElementById('eggGrid');
+      const resetBtn = document.getElementById('resetBtn');
+
+      // 存储每颗蛋的状态 (true = 已砸开)
+      let smashedState = new Array(EGG_COUNT).fill(false);
+
+      // ---------- 渲染六个金蛋 ----------
+      function renderEggs() {
+        eggGrid.innerHTML = '';  // 清空
+
+        for (let i = 0; i < EGG_COUNT; i++) {
+          const eggCard = document.createElement('div');
+          eggCard.className = 'egg-card';
+          if (smashedState[i]) {
+            eggCard.classList.add('smashed');
+          }
+
+          // 为每一个蛋绑定点击事件
+          eggCard.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // 如果已经砸开，就不再响应
+            if (smashedState[i]) return;
+
+            // 更新状态
+            smashedState[i] = true;
+            // 添加类名触发翻转
+            eggCard.classList.add('smashed');
+          });
+
+          // 翻转容器
+          const flipContainer = document.createElement('div');
+          flipContainer.className = 'flip-container';
+
+          // ---------- 正面（金蛋外观）----------
+          const eggFront = document.createElement('div');
+          eggFront.className = 'egg-front';
+
+          // 锤子图标 + 裂纹装饰
+          const hammerSpan = document.createElement('div');
+          hammerSpan.className = 'hammer-icon';
+          hammerSpan.textContent = '🔨';
+
+          const crackSpan = document.createElement('div');
+          crackSpan.className = 'crack-icon';
+          crackSpan.textContent = '⚡';   // 闪电裂纹感觉
+
+          // 可选的 "砸" 标签，或者蛋的序号
+          const labelSpan = document.createElement('div');
+          labelSpan.className = 'egg-label';
+          labelSpan.textContent = `#${i + 1}`;
+
+          eggFront.appendChild(hammerSpan);
+          eggFront.appendChild(crackSpan);
+          eggFront.appendChild(labelSpan);
+
+          // ---------- 背面（竖中指）----------
+          const eggBack = document.createElement('div');
+          eggBack.className = 'egg-back';
+
+          const fingerContainer = document.createElement('div');
+          fingerContainer.className = 'finger-container';
+
+          const fingerEmoji = document.createElement('div');
+          fingerEmoji.className = 'finger-emoji';
+          fingerEmoji.textContent = FINGER_EMOJI;   // 竖中指
+
+          const smashedMessage = document.createElement('div');
+          smashedMessage.className = 'smashed-message';
+          smashedMessage.textContent = '送你中指';
+
+          fingerContainer.appendChild(fingerEmoji);
+          fingerContainer.appendChild(smashedMessage);
+          eggBack.appendChild(fingerContainer);
+
+          // 组装
+          flipContainer.appendChild(eggFront);
+          flipContainer.appendChild(eggBack);
+          eggCard.appendChild(flipContainer);
+
+          eggGrid.appendChild(eggCard);
+        }
+      }
+
+      // ---------- 重置所有蛋（恢复未砸状态）----------
+      function resetAllEggs() {
+        // 将所有状态重置为 false
+        smashedState = new Array(EGG_COUNT).fill(false);
+        // 重新渲染（简单暴力，确保无残留类/事件）
+        renderEggs();
+      }
+
+      // ---------- 初始化&绑定重置按钮 ----------
+      function init() {
+        renderEggs();
+        resetBtn.addEventListener('click', resetAllEggs);
+      }
+
+      // 启动
+      init();
+
+      // 额外：如果希望点击后有小动画，已经包含在CSS翻转中。
+      // 若想防止双击导致多次翻转，每次点击检查状态并置位，OK。
+    })();
+  </script>
+</body>
+</html>
